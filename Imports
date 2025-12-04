@@ -1,0 +1,93 @@
+
+!pip install langchain langchain-community sentence-transformers faiss-cpu pypdf2 accelerate transformers pycryptodome
+!pip install transformers sacremoses pypdf faiss-cpu
+
+import os
+import torch
+import faiss
+from transformers import AutoTokenizer, AutoModelForCausalLM
+from pypdf import PdfReader
+import numpy as np
+
+
+from langchain_community.embeddings import HuggingFaceEmbeddings
+from langchain_community.vectorstores import FAISS
+from langchain.text_splitter import RecursiveCharacterTextSplitter
+from langchain.schema import Document
+
+from transformers import AutoTokenizer, AutoModelForCausalLM, pipeline
+from transformers import AutoTokenizer, AutoModelForCausalLM
+import torch
+
+# Load BioGPT
+model_name = "microsoft/biogpt"
+tokenizer = AutoTokenizer.from_pretrained(model_name)
+model = AutoModelForCausalLM.from_pretrained(model_name)
+
+def ask_biogpt(question, max_length=150):
+    inputs = tokenizer(question, return_tensors="pt")
+    with torch.no_grad():
+        outputs = model.generate(**inputs, max_length=max_length)
+    return tokenizer.decode(outputs[0], skip_special_tokens=True)
+
+# Example test
+print(ask_biogpt("Explain the chemical structure of benzene."))
+
+from google.colab import drive
+drive.mount('/content/drive', force_remount=True)
+
+!ls "/content/drive/MyDrive"
+
+zip_path = "/content/drive/MyDrive/ChemData.zip"  # ZIP in Drive
+extract_path = "/content/mydata"                  # VM folder for extraction
+
+import zipfile, os
+
+if not os.path.exists(extract_path):
+    with zipfile.ZipFile(zip_path, 'r') as zip_ref:
+        zip_ref.extractall(extract_path)
+
+print("Extracted files:", os.listdir(extract_path)[:10])  # shows first 10 files
+
+
+import os
+
+extract_path = "/content/mydata"
+
+print("Files and folders inside extract_path:")
+for root, dirs, files in os.walk(extract_path):
+    print("In folder:", root)
+    print("Files:", files)
+import os
+import glob
+
+# Folder where ZIP was extracted
+extract_path = "/content/mydata"
+
+# Recursively find all PDFs, case-insensitive
+pdf_files = glob.glob(f"{extract_path}/**/*.pdf", recursive=True)  # lowercase
+pdf_files += glob.glob(f"{extract_path}/**/*.PDF", recursive=True)  # uppercase
+
+print(f"Found {len(pdf_files)} PDFs")
+print("First 5 PDFs:", pdf_files[:5])
+
+from pypdf import PdfReader
+import glob
+import os
+
+extract_path = "/content/mydata"
+
+# Recursively find all PDFs (case-insensitive)
+pdf_files = glob.glob(f"{extract_path}/**/*.pdf", recursive=True)
+pdf_files += glob.glob(f"{extract_path}/**/*.PDF", recursive=True)
+
+all_texts = []
+for file in pdf_files:
+    reader = PdfReader(file)
+    text = ""
+    for page in reader.pages:
+        text += page.extract_text() or ""
+    all_texts.append(text)
+
+print(f"Loaded {len(all_texts)} PDF(s) from {extract_path}")
+
