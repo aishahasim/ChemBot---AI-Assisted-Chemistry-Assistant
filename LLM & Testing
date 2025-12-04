@@ -1,0 +1,59 @@
+
+
+from transformers import pipeline
+
+# Create text-generation pipeline
+pipe = pipeline(
+    "text-generation",
+    model=model,
+    tokenizer=tokenizer,
+    device_map="auto"  # uses GPU if available
+)
+def generate_text(prompt, max_new_tokens=50, temperature=0.3):
+    output = pipe(prompt, max_new_tokens=max_new_tokens,
+                  temperature=temperature, top_p=0.9)[0]["generated_text"]
+    return output
+
+def chatbot(query, top_k=3):
+    docs = db.similarity_search(query, k=top_k)
+    context = "\n".join([d.page_content for d in docs])
+
+    prompt = f"""You are ChemBot, an expert chemistry assistant.
+Use the following context from research papers and documents to answer the query. Do not hallucinate or give irrelevant information.
+Context:
+{context}
+
+Question: {query}
+Answer:"""
+
+    return generate_text(prompt, max_new_tokens=50, temperature=0.3)
+
+while True:
+    user_query = input("You: ")
+    if user_query.lower() in ["exit", "quit", "bye"]:
+        print("ChemBot: Goodbye! 👋")
+        break
+    answer = chatbot(user_query)
+    print("ChemBot:", answer)
+
+while True:
+    user_query = input("You: ")
+    if user_query.lower() in ["exit", "quit", "bye"]:
+        print("ChemBot: Goodbye! 👋")
+        break
+    answer = chatbot(user_query)
+    print("ChemBot:", answer)
+
+import gradio as gr
+
+def chat_interface(user_query):
+    return chatbot(user_query)
+
+demo = gr.Interface(fn=chat_interface,
+                    inputs=gr.Textbox(lines=2, placeholder="Ask ChemBot..."),
+                    outputs="text",
+                    title="ChemBot - Chemistry Assistant")
+
+demo.launch(share=True)  # share=True gives you a public link
+
+
